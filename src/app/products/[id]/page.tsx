@@ -216,7 +216,7 @@ export default async function ProductDetailPage({
           <SectionHeading id="chi-tiet-san-pham">
             Chi Tiết Sản Phẩm
           </SectionHeading>
-          <div className="mt-3">
+          <dl className="mt-3">
             {[
               ["Tên sản phẩm", product.name],
               ["Mã sản phẩm (SKU)", product.sku],
@@ -234,7 +234,7 @@ export default async function ProductDetailPage({
                   <dd className="whitespace-pre-wrap">{value}</dd>
                 </div>
               ))}
-          </div>
+          </dl>
         </section>
 
         <section className="mt-24" aria-labelledby="tai-lieu-bai-viet">
