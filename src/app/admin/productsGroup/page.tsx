@@ -12,12 +12,16 @@ type PageProps = {
 async function getRows(table: string) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
-  const { data } = await supabase
-    .from(table)
-    .select("*")
-    .order("sort_order", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(12);
+  
+  let query = supabase.from(table).select("*");
+  
+  if (table !== "cms_products") {
+    query = query.order("sort_order", { ascending: true, nullsFirst: false });
+  }
+  
+  query = query.order("created_at", { ascending: false }).limit(1000);
+  
+  const { data } = await query;
   return data ?? [];
 }
 

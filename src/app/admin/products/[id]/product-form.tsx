@@ -60,16 +60,36 @@ export default function ProductForm({ initialData, categories, docs, products }:
     const files = e.target.files;
     if (!files) return;
     
+    const currentCount = formData.images.length;
+    const availableSlots = 5 - currentCount;
+    
+    if (availableSlots <= 0) {
+      alert("Chỉ được upload tối đa 5 hình ảnh cho 1 sản phẩm.");
+      e.target.value = ""; // Reset input
+      return;
+    }
+    
+    const filesToProcess = Array.from(files).slice(0, availableSlots);
+    if (files.length > availableSlots) {
+       alert(`Bạn đã chọn quá số lượng. Hệ thống chỉ lấy thêm ${availableSlots} ảnh để đạt tối đa 5 ảnh.`);
+    }
+
     const newImages: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i];
       if (file.size > 0) {
         const buffer = await file.arrayBuffer();
         const base64String = Buffer.from(buffer).toString("base64");
         newImages.push(`data:${file.type};base64,${base64String}`);
       }
     }
-    setFormData((prev) => ({ ...prev, images: [...prev.images, ...newImages] }));
+    
+    setFormData((prev) => {
+      const totalImages = [...prev.images, ...newImages].slice(0, 5);
+      return { ...prev, images: totalImages };
+    });
+    
+    e.target.value = ""; // Reset input after processing
   };
 
   const moveItem = (arrayName: "images" | "details" | "summaries", index: number, direction: "up" | "down") => {
@@ -164,9 +184,21 @@ export default function ProductForm({ initialData, categories, docs, products }:
 
       {/* Hình ảnh */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <h2 className="text-xl font-bold mb-4 text-slate-800">Hình ảnh</h2>
-        <input type="file" multiple accept="image/*" onChange={handleImageFileChange} className="mb-4 block" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-800">Hình ảnh (Tối đa 5 ảnh)</h2>
+          <span className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
+            {formData.images.length}/5 ảnh
+          </span>
+        </div>
+        <input 
+          type="file" 
+          multiple 
+          accept="image/*" 
+          onChange={handleImageFileChange} 
+          disabled={formData.images.length >= 5}
+          className="mb-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 cursor-pointer" 
+        />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {formData.images.map((img: string, index: number) => (
             <div key={index} className="relative border rounded p-2 bg-gray-50 flex flex-col items-center">
               <img src={img} alt={`img-${index}`} className="w-full h-32 object-contain mb-2 bg-white border" />

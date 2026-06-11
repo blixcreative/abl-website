@@ -1,6 +1,8 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   ChevronRight,
   FileText,
@@ -9,39 +11,19 @@ import {
   Send,
 } from "lucide-react";
 
-const product = {
-  name: "Keo sữa ABL - 130",
-  code: "ABL - 130",
-  brand: "ABL",
-  category: "Keo Sữa 01 Thành Phần",
-  description:
-    "ABL - 130 được nghiên cứu và sản xuất chuyên biệt cho ngành dán veneer gỗ, mang lại độ bám dính cao, bề mặt láng mịn và đường keo trong suốt, giữ trọn vẹn vẻ đẹp tự nhiên của gỗ. Ưu điểm nổi bật với độ kết dính mạnh, tạo liên kết chắc chắn, hạn chế bong tróc. An toàn & thân thiện môi trường. Ứng dụng dễ dàng trong việc dán veneer gỗ tự nhiên trong sản xuất nội thất cao cấp. Phù hợp cho các nhà máy, xưởng sản xuất đồ gỗ xuất khẩu.",
-  details: [
-    ["Mã sản phẩm", "ABL - 130"],
-    ["Thương hiệu", "ABL"],
-    ["Giải pháp ứng dụng", "Dán veneer giấy, dán veneer gỗ, ghép nối đầu, ghép ngang"],
-    ["Đặc tính", "Keo 01 thành phần, màu trắng sữa, dạng lỏng, khô mờ"],
-    ["Nguồn gốc nguyên liệu chính", "Germany, Japan, Singapore"],
-    ["Bảo quản", "Bảo quản ở nhiệt độ phòng, đậy kín sau khi sử dụng"],
-    ["Quy cách sản phẩm", "Xô, phuy, IBC"],
-    ["Dung tích thực", "20 lít/xô, 200 kg/phuy, 1000 kg/IBC"],
-    ["Hướng dẫn sử dụng", "Xem trên bao bì sản phẩm"],
-    ["Bảng tiêu chuẩn", "MSDS, TDS, COA"],
-    ["Các chứng nhận", "SGS, Quatest 2"],
-  ],
-};
-
-const relatedProducts = [
-  "Keo sữa ABL - 310",
-  "Keo sữa ABL - 320",
-  "Keo sữa ABL - 323",
-  "Keo sữa ABL - 410",
-];
-
-function GrayImage({ className = "" }: { className?: string }) {
+function GrayImage({ className = "", src }: { className?: string, src?: string | null }) {
+  if (src) {
+    return (
+      <div
+        className={`flex items-center justify-center overflow-hidden bg-white border border-[#b7b7b7] ${className}`}
+      >
+        <img src={src} alt="Product Image" className="max-w-full max-h-full object-contain" />
+      </div>
+    );
+  }
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden bg-[#eeeeee] ${className}`}
+      className={`flex items-center justify-center overflow-hidden bg-[#eeeeee] border border-[#b7b7b7] ${className}`}
       aria-label="Khu vực hình ảnh sản phẩm"
     >
       <div className="h-1/3 w-2/3 rounded-full bg-white/35 blur-sm" />
@@ -60,40 +42,107 @@ function SectionHeading({ children, id }: { children: string; id?: string }) {
   );
 }
 
-export function generateStaticParams() {
-  return [{ id: "abl-130" }];
-}
-
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await params;
+  const { id } = await params;
+  
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return notFound();
+
+  const { data: product } = await supabase
+    .from("cms_products")
+    .select(`
+      *,
+      cms_product_categories(id, name, level, parent_id)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (!product) {
+    return notFound();
+  }
+
+  let rootCategoryId = product.cms_product_categories?.id;
+  let rootCategoryName = product.cms_product_categories?.name || "Danh mục";
+  let currentLevel = product.cms_product_categories?.level;
+  let parentId = product.cms_product_categories?.parent_id;
+
+  // Nếu là danh mục con, tìm lên danh mục cha level 0
+  // Dùng vòng lặp an toàn giới hạn tối đa 5 cấp độ để tránh loop vô hạn
+  let depth = 0;
+  while ((currentLevel > 0 || currentLevel === "1" || currentLevel === "2") && parentId && depth < 5) {
+    const { data: parentCat } = await supabase
+      .from("cms_product_categories")
+      .select("id, name, level, parent_id")
+      .eq("id", parentId)
+      .single();
+    
+    if (parentCat) {
+      rootCategoryId = parentCat.id;
+      rootCategoryName = parentCat.name;
+      currentLevel = parentCat.level;
+      parentId = parentCat.parent_id;
+    } else {
+      break;
+    }
+    depth++;
+  }
+
+  const categoryName = rootCategoryName;
+  const categoryUrl = rootCategoryId ? `/products/category-list/${rootCategoryId}` : "/products";
+  const fallbackImage = categoryName.toLowerCase().includes("nhám") ? "/images/product-3.png" : "/images/product-1.png";
+
+  // Parse images if needed
+  let imagesList: string[] = [];
+  try {
+    if (Array.isArray(product.images)) {
+      imagesList = product.images;
+    } else if (typeof product.images === "string") {
+      const parsed = JSON.parse(product.images);
+      if (Array.isArray(parsed)) imagesList = parsed;
+    }
+  } catch(e) {
+    // ignore
+  }
+
+  const mainImage = product.main_image_url || product.image_base64 || imagesList[0] || fallbackImage;
+
+  const { data: relatedProductsData } = await supabase
+    .from("cms_products")
+    .select("*")
+    .eq("category_id", product.category_id)
+    .neq("id", product.id)
+    .limit(4);
 
   return (
     <main className="mx-auto w-full bg-white text-[#3d3d3d]">
       <Header />
 
-      <div className="container mx-auto w-full px-4 py-12 md:py-16">
+      <div className="container mx-auto w-full px-4 py-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-10 border-b border-[#3d3d3d] pb-5 text-base text-[#4a4a4a] md:text-xl"
         >
           <ol className="flex flex-wrap items-center gap-2">
-            {["Keo - Chất Đóng Rắn", "Keo Sữa", product.category].map(
-              (item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <Link href="/products" className="underline underline-offset-2">
-                    {item}
+            {[
+              { label: "Sản Phẩm", href: "/products" },
+              { label: categoryName, href: categoryUrl }
+            ].map(
+              (item, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <Link href={item.href} className="underline underline-offset-2 hover:text-[#00aeef]">
+                    {item.label}
                   </Link>
                   <ChevronRight className="size-5" aria-hidden="true" />
                 </li>
               ),
             )}
             <li>
-              <span className="underline underline-offset-2">
-                {product.code}
+              <span className="font-bold">
+                {product.name}
               </span>
             </li>
           </ol>
@@ -102,6 +151,7 @@ export default async function ProductDetailPage({
         <h1 className="mb-5 text-4xl font-bold uppercase leading-tight text-[#3d3d3d] md:text-5xl">
           {product.name}
         </h1>
+        {/* {product.sku && <p className="mb-8 text-xl text-gray-500">Mã: {product.sku}</p>} */}
 
         <div className="mb-8 flex flex-wrap bg-[#153d4b] text-white">
           {[
@@ -123,19 +173,20 @@ export default async function ProductDetailPage({
         <section className="grid gap-10 lg:grid-cols-[520px_1fr] lg:items-start">
           <div className="grid gap-6 md:grid-cols-[96px_1fr]">
             <div className="grid grid-cols-4 gap-3 md:grid-cols-1">
-              {[1, 2, 3, 4].map((item) => (
+              {[0, 1, 2, 3].map((index) => (
                 <GrayImage
-                  key={item}
-                  className="aspect-square border border-[#b7b7b7]"
+                  key={index}
+                  className="aspect-square"
+                  src={imagesList[index] || (index === 0 ? mainImage : null)}
                 />
               ))}
             </div>
 
-            <div className="border border-[#b7b7b7] p-6">
-              <GrayImage className="h-[360px] w-full" />
-              <div className="mt-8 text-center">
+            <div className="p-2 border border-[#b7b7b7]">
+              <GrayImage className="h-[360px] w-full" src={mainImage} />
+              <div className="mt-4 text-center">
                 <span className="inline-flex rounded-full border border-[#3d3d3d] px-5 py-2 text-sm">
-                  Di chuột vào ảnh để phóng to
+                  Hình ảnh sản phẩm
                 </span>
               </div>
             </div>
@@ -145,33 +196,34 @@ export default async function ProductDetailPage({
             <h2 className="text-3xl font-bold uppercase text-[#3d3d3d]">
               Mô Tả Sản Phẩm
             </h2>
-            <p className="mt-3 text-xl leading-relaxed text-[#4a4a4a]">
-              <strong>{product.code}</strong> {product.description}
-            </p>
+            <div className="mt-3 text-xl leading-relaxed text-[#4a4a4a] whitespace-pre-wrap">
+              <strong>{product.sku || product.name}</strong> - {product.short_description || product.description}
+            </div>
 
             <div className="mt-10">
               <h2 className="text-3xl font-bold uppercase text-[#3d3d3d]">
                 Tài Liệu Kỹ Thuật
               </h2>
               <div className="mt-4 flex flex-wrap gap-x-12 gap-y-3 text-base">
-                {["Tech Data Sheet (PDF)", "Safety Data Sheet (PDF)"].map(
-                  (item) => (
-                    <a
-                      key={item}
-                      href="#tai-lieu-bai-viet"
-                      className="inline-flex items-center gap-3 underline underline-offset-2"
-                    >
-                      <FileText className="size-5" aria-hidden="true" />
-                      {item}
-                    </a>
-                  ),
+                {product.datasheet_url ? (
+                  <a
+                    href={product.datasheet_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 underline underline-offset-2 hover:text-[#00aeef]"
+                  >
+                    <FileText className="size-5" aria-hidden="true" />
+                    Tải Datasheet (PDF)
+                  </a>
+                ) : (
+                  <span className="text-gray-500 italic">Đang cập nhật tài liệu</span>
                 )}
               </div>
             </div>
 
             <a
               href="#lien-he"
-              className="mt-10 inline-flex h-16 w-full items-center justify-center bg-[#00aeef] px-8 text-xl font-bold uppercase text-white"
+              className="mt-10 inline-flex h-16 w-full items-center justify-center bg-[#00aeef] px-8 text-xl font-bold uppercase text-white hover:bg-[#075f74] transition-colors"
             >
               Liên Hệ Tư Vấn & Báo Giá
             </a>
@@ -183,15 +235,23 @@ export default async function ProductDetailPage({
             Chi Tiết Sản Phẩm
           </SectionHeading>
           <div className="mt-3">
-            {product.details.map(([label, value]) => (
-              <div
-                key={label}
-                className="grid gap-3 border-b border-[#c7c7c7] py-4 text-lg md:grid-cols-[360px_1fr]"
-              >
-                <dt className="font-bold">{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
+            {[
+              ["Tên sản phẩm", product.name],
+              ["Mã sản phẩm (SKU)", product.sku],
+              ["Danh mục", categoryName],
+              ["Đặc tính", product.features || product.description],
+              ["Quy cách đóng gói", product.specifications],
+            ]
+              .filter(([, value]) => value) // Chỉ hiển thị các dòng có dữ liệu
+              .map(([label, value]) => (
+                <div
+                  key={label}
+                  className="grid gap-3 border-b border-[#c7c7c7] py-4 text-lg md:grid-cols-[360px_1fr]"
+                >
+                  <dt className="font-bold">{label}</dt>
+                  <dd className="whitespace-pre-wrap">{value}</dd>
+                </div>
+              ))}
           </div>
         </section>
 
@@ -200,24 +260,27 @@ export default async function ProductDetailPage({
             Tài Liệu & Bài Viết
           </SectionHeading>
 
-          <div className="mt-10 flex flex-wrap gap-10 text-xl">
-            <button className="border-b-4 border-[#006f95] pb-4 font-bold text-[#006f95]">
-              Tài Liệu Hướng Dẫn Sử Dụng
+          <div className="mt-10 flex flex-wrap gap-10 text-xl border-b border-gray-200 pb-4">
+            <button className="border-b-4 border-[#006f95] pb-4 font-bold text-[#006f95] -mb-[20px]">
+              Tài Liệu Kỹ Thuật
             </button>
-            <button>Tài Liệu An Toàn Kỹ Thuật</button>
-            <button>Bài Viết</button>
           </div>
 
           <div className="mt-10">
             <h3 className="text-xl font-bold uppercase">{product.name}</h3>
-            <a
-              href="#"
-              className="mt-5 inline-flex items-center gap-3 text-lg underline underline-offset-2"
-            >
-              <FileText className="size-5" aria-hidden="true" />
-              Tài Liệu Hướng Dẫn Sử Dụng (PDF)
-            </a>
-            <p className="mt-5 text-lg">Tên/Số tài liệu: ABL-130-HDSD</p>
+            {product.datasheet_url ? (
+               <a
+                 href={product.datasheet_url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="mt-5 inline-flex items-center gap-3 text-lg underline underline-offset-2 hover:text-[#00aeef]"
+               >
+                 <FileText className="size-5" aria-hidden="true" />
+                 Tài Liệu Kỹ Thuật / Datasheet (PDF)
+               </a>
+            ) : (
+               <p className="mt-5 text-lg italic text-gray-500">Đang cập nhật...</p>
+            )}
           </div>
         </section>
 
@@ -228,20 +291,18 @@ export default async function ProductDetailPage({
             <div className="mb-10 grid gap-8 md:grid-cols-[220px_1fr]">
               <div>
                 <h3 className="mb-6 text-2xl font-bold">{product.name}</h3>
-                <GrayImage className="h-[120px] w-full" />
+                <GrayImage className="h-[120px] w-full" src={mainImage} />
               </div>
 
               <div className="grid gap-5 text-xl md:grid-cols-2">
                 {[
-                  ["Mã sản phẩm", product.name],
-                  ["Thương hiệu", product.brand],
-                  ["Đặc tính", "Keo 01 thành phần, màu trắng sữa, dạng lỏng, khô mờ"],
-                  ["Quy cách sản phẩm", "Xô, phuy, IBC"],
-                  ["Dung tích", "20 lít/thùng"],
+                  ["Mã sản phẩm", product.sku || product.name],
+                  ["Danh mục", categoryName],
+                  ["Đặc tính", product.features || product.description || "Đang cập nhật"],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <h4 className="font-bold">{label}</h4>
-                    <p>{value}</p>
+                    <p className="line-clamp-2" title={value}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -257,7 +318,7 @@ export default async function ProductDetailPage({
                   {label}
                   <input
                     placeholder={placeholder}
-                    className="mt-2 h-14 w-full border border-[#222] px-4 font-normal outline-none"
+                    className="mt-2 h-14 w-full border border-[#222] px-4 font-normal outline-none focus:border-[#00aeef]"
                   />
                 </label>
               ))}
@@ -266,13 +327,14 @@ export default async function ProductDetailPage({
                 Nội dung liên hệ
                 <textarea
                   placeholder="Nhập những vấn đề bạn cần chúng tôi giải đáp"
-                  className="mt-2 h-32 w-full resize-none border border-[#222] px-4 py-4 font-normal outline-none"
+                  className="mt-2 h-32 w-full resize-none border border-[#222] px-4 py-4 font-normal outline-none focus:border-[#00aeef]"
+                  defaultValue={`Tôi cần tư vấn thêm về sản phẩm ${product.name} (SKU: ${product.sku || 'N/A'})`}
                 />
               </label>
 
               <div className="pt-8 text-center">
-                <button className="h-14 min-w-[285px] border border-[#00aeef] px-8 text-xl font-bold uppercase text-[#00aeef]">
-                  Liên Hệ Với Chúng Tôi
+                <button type="button" className="h-14 min-w-[285px] border border-[#00aeef] px-8 text-xl font-bold uppercase text-[#00aeef] hover:bg-[#00aeef] hover:text-white transition-colors">
+                  Gửi Yêu Cầu
                 </button>
               </div>
             </div>
@@ -285,50 +347,55 @@ export default async function ProductDetailPage({
           </SectionHeading>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {relatedProducts.map((name) => (
-              <article
-                key={name}
-                className="flex min-h-[420px] flex-col border border-[#e5e5e5] bg-white px-6 pb-7 pt-7"
-              >
-                <GrayImage className="mb-auto h-[220px] w-full" />
+            {relatedProductsData && relatedProductsData.length > 0 ? (
+              relatedProductsData.map((related: any) => {
+                let relatedImage = fallbackImage;
+                if (related.main_image_url || related.image_base64) {
+                  relatedImage = related.main_image_url || related.image_base64;
+                } else if (related.images) {
+                  try {
+                    const p = typeof related.images === "string" ? JSON.parse(related.images) : related.images;
+                    if (Array.isArray(p) && p.length > 0) relatedImage = p[0];
+                  } catch (e) {}
+                }
 
-                <div className="pt-8">
-                  <h3 className="border-b border-[#777] pb-3 text-xl font-bold leading-tight">
-                    {name}
-                  </h3>
+                return (
+                  <article
+                    key={related.id}
+                    className="flex min-h-[420px] flex-col border border-[#e5e5e5] bg-white px-6 pb-7 pt-7 hover:shadow-md transition-shadow"
+                  >
+                    <Link href={`/products/${related.id}`} className="mb-auto h-[220px] w-full flex justify-center items-center">
+                      <img src={relatedImage} alt={related.name} className="max-w-full max-h-full object-contain" />
+                    </Link>
 
-                  <div className="mt-3 grid grid-cols-2 gap-5 text-sm leading-relaxed">
-                    <div>
-                      <h4 className="font-bold">Đặc tính</h4>
-                      <p>Màu trắng sữa, khô mờ, dạng sệt, màng keo khô trong.</p>
+                    <div className="pt-8">
+                      <h3 className="border-b border-[#777] pb-3 text-xl font-bold leading-tight">
+                        <Link href={`/products/${related.id}`} className="hover:text-[#00aeef]">
+                          {related.name}
+                        </Link>
+                      </h3>
+
+                      <div className="mt-3 grid grid-cols-2 gap-5 text-sm leading-relaxed">
+                        <div>
+                          <h4 className="font-bold">Đặc tính</h4>
+                          <p className="line-clamp-3">{related.description || related.features || "Đang cập nhật"}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-bold">Quy cách</h4>
+                          <p className="line-clamp-3">{related.specifications || "Đang cập nhật"}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold">Quy cách</h4>
-                      <ul>
-                        <li>20 kg/xô</li>
-                        <li>200 kg/phuy</li>
-                        <li>1.000 kg/IBC</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
+                  </article>
+                );
+              })
+            ) : (
+              <p className="text-gray-500 italic">Chưa có sản phẩm tương tự nào.</p>
+            )}
           </div>
         </section>
       </div>
 
-      <div className="fixed right-4 top-1/2 z-20 hidden -translate-y-1/2 flex-col overflow-hidden rounded-full bg-[#002330] text-white lg:flex">
-        {[MessageCircle, Phone, Send].map((Icon, index) => (
-          <a
-            key={index}
-            href="#lien-he"
-            className="grid size-14 place-items-center text-[#9feeff]"
-          >
-            <Icon className="size-6" aria-hidden="true" />
-          </a>
-        ))}
-      </div>
 
       <Footer />
     </main>

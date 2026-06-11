@@ -45,7 +45,7 @@ export default function ProductBannerSlider({ banners }: ProductBannerSliderProp
   };
 
   return (
-    <section className="relative flex min-h-[585px] w-full items-center overflow-hidden bg-[#173754] text-white">
+    <section className="relative flex h-[600px] w-full items-center overflow-hidden bg-[#173754] text-white">
       {activeSlide.image_file ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

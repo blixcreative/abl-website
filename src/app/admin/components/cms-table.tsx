@@ -66,17 +66,20 @@ function SortableRow({ row, module, onEdit, onDelete, isPending }: any) {
             const imageUrl = row[imageField.name];
             const isImage = imageUrl && (imageField.name.includes("image") || imageUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i));
             
-            let thumbnailSrc = imageUrl;
+            let thumbnailSrc: string | null = null;
+            
             // Handle array or JSON of images
             if (Array.isArray(imageUrl) && imageUrl.length > 0) {
-              thumbnailSrc = imageUrl[0];
+              thumbnailSrc = typeof imageUrl[0] === "string" ? imageUrl[0] : null;
             } else if (typeof imageUrl === "string" && imageUrl.startsWith("[")) {
               try {
                 const parsed = JSON.parse(imageUrl);
-                thumbnailSrc = parsed[0] || null;
+                thumbnailSrc = (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") ? parsed[0] : null;
               } catch (e) {
                 // ignore
               }
+            } else if (typeof imageUrl === "string") {
+              thumbnailSrc = imageUrl;
             }
             
             if (thumbnailSrc && (imageField.name.includes("image") || thumbnailSrc.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i))) {
