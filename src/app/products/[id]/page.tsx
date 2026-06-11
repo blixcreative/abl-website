@@ -270,14 +270,14 @@ export default async function ProductDetailPage({
           <SectionHeading id="lien-he">Liên Hệ Tư Vấn & Báo Giá</SectionHeading>
 
           <form className="mt-10 border border-[#e5e5e5] px-6 py-8 md:px-8">
-            <div className="mb-10 grid gap-8 md:grid-cols-[220px_1fr]">
+            <div className="mb-10 flex gap-10">
               <div>
-                <h3 className="mb-6 text-2xl font-bold">{product.name}</h3>
-                <GrayImage className="h-[120px] w-full" src={mainImage} />
+                <GrayImage className="h-[320px] w-[320px]" src={mainImage} />
               </div>
 
-              <div className="grid gap-5 text-xl md:grid-cols-2">
+              <div className="flex flex-col gap-5 text-lg leading-relaxed text-[#4a4a4a]">
                 {[
+                  ["Tên sản phẩm", product.name || product.name],
                   ["Mã sản phẩm", product.sku || product.name],
                   ["Danh mục", categoryName],
                   ["Đặc tính", product.features || product.description || "Đang cập nhật"],
