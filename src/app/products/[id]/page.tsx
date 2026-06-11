@@ -10,6 +10,7 @@ import {
   Phone,
   Send,
 } from "lucide-react";
+import ProductGallery from "./ProductGallery";
 
 function GrayImage({ className = "", src }: { className?: string, src?: string | null }) {
   if (src) {
@@ -171,26 +172,7 @@ export default async function ProductDetailPage({
         </div>
 
         <section className="grid gap-10 lg:grid-cols-[520px_1fr] lg:items-start">
-          <div className="grid gap-6 md:grid-cols-[96px_1fr]">
-            <div className="grid grid-cols-4 gap-3 md:grid-cols-1">
-              {[0, 1, 2, 3].map((index) => (
-                <GrayImage
-                  key={index}
-                  className="aspect-square"
-                  src={imagesList[index] || (index === 0 ? mainImage : null)}
-                />
-              ))}
-            </div>
-
-            <div className="p-2 border border-[#b7b7b7]">
-              <GrayImage className="h-[360px] w-full" src={mainImage} />
-              <div className="mt-4 text-center">
-                <span className="inline-flex rounded-full border border-[#3d3d3d] px-5 py-2 text-sm">
-                  Hình ảnh sản phẩm
-                </span>
-              </div>
-            </div>
-          </div>
+          <ProductGallery images={imagesList} mainImage={mainImage} />
 
           <div className="pt-1">
             <h2 className="text-3xl font-bold uppercase text-[#3d3d3d]">
