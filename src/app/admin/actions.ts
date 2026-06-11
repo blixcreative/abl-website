@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { promises as fs } from "fs";
+import path from "path";
 
 const tableAllowList = new Set([
   "cms_home_hero",
@@ -18,18 +20,14 @@ const tableAllowList = new Set([
   "cms_site_information",
   "cms_menu_items",
   "cms_about_page_sections",
+  "cms_about_mini_slide",
+  "cms_about_partner",
+  "cms_about_award",
 ]);
 
 async function normalizeValue(value: FormDataEntryValue) {
   if (value instanceof File) {
-    // Chỉ xử lý file nếu dung lượng lớn hơn 0
-    if (value.size > 0) {
-      // Đọc file thành base64 data url (chỉ phù hợp với hình ảnh/file nhỏ)
-      const buffer = await value.arrayBuffer();
-      const base64String = Buffer.from(buffer).toString("base64");
-      return `data:${value.type};base64,${base64String}`;
-    }
-    return undefined;
+    return value;
   }
 
   const trimmed = value.trim();
@@ -71,8 +69,50 @@ export async function createCmsRecord(table: string, formData: FormData) {
 
     const normalized = await normalizeValue(value);
 
-    if (normalized !== undefined) {
-      payload[key] = normalized;
+    if (normalized instanceof File) {
+      if (normalized.size > 0) {
+        const fileExt = normalized.name.split(".").pop() || "";
+        const originalName = normalized.name.replace(`.${fileExt}`, "");
+        // Clean original name to be safe for filesystem
+        const safeOriginalName = originalName.replace(/[^a-zA-Z0-9_-]/g, "-").substring(0, 30);
+        const fileName = `${safeOriginalName}-${Date.now()}.${fileExt}`;
+        const buffer = await normalized.arrayBuffer();
+        
+        // Define path to save in public/uploads folder
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        
+        // Ensure directory exists
+        try {
+          await fs.access(uploadDir);
+        } catch {
+          await fs.mkdir(uploadDir, { recursive: true });
+        }
+
+        const filePath = path.join(uploadDir, fileName);
+        
+        // Write the file to disk
+        await fs.writeFile(filePath, Buffer.from(buffer));
+        
+        // Use relative URL from public root
+        const publicUrl = `/uploads/${fileName}`;
+
+        // Assign the url to the payload based on whether it is a file URL or image field
+        if (table === "cms_technical_documents" && key === "file_url") {
+          payload[key] = publicUrl;
+          payload["file_size"] = normalized.size;
+          payload["mime_type"] = normalized.type;
+        } else {
+          // Store the path to the file rather than base64
+          payload[key] = publicUrl;
+        }
+      }
+    } else if (normalized !== undefined) {
+      if (key === "file_url" && typeof normalized === "string" && normalized.startsWith("http")) {
+        // If a file URL was manually typed in instead of a file upload, use that
+        payload[key] = normalized;
+      } else {
+        payload[key] = normalized as string | boolean | number | null;
+      }
     }
   }
 
@@ -92,6 +132,12 @@ export async function createCmsRecord(table: string, formData: FormData) {
     } else {
       payload.level = 0;
     }
+  }
+
+  // Auto-generate document_code if missing on technical documents to prevent unique constraint errors
+  if (table === "cms_technical_documents" && !payload.document_code && typeof payload.title === "string") {
+    // Generate a unique code like DOC-1234567890
+    payload.document_code = `DOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }
 
   // Luôn luôn đặt trạng thái là published theo yêu cầu
@@ -133,8 +179,49 @@ export async function updateCmsRecord(table: string, id: string | number, formDa
 
     const normalized = await normalizeValue(value);
 
-    if (normalized !== undefined) {
-      payload[key] = normalized;
+    if (normalized instanceof File) {
+      if (normalized.size > 0) {
+        const fileExt = normalized.name.split(".").pop() || "";
+        const originalName = normalized.name.replace(`.${fileExt}`, "");
+        // Clean original name to be safe for filesystem
+        const safeOriginalName = originalName.replace(/[^a-zA-Z0-9_-]/g, "-").substring(0, 30);
+        const fileName = `${safeOriginalName}-${Date.now()}.${fileExt}`;
+        const buffer = await normalized.arrayBuffer();
+        
+        // Define path to save in public/uploads folder
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        
+        // Ensure directory exists
+        try {
+          await fs.access(uploadDir);
+        } catch {
+          await fs.mkdir(uploadDir, { recursive: true });
+        }
+
+        const filePath = path.join(uploadDir, fileName);
+        
+        // Write the file to disk
+        await fs.writeFile(filePath, Buffer.from(buffer));
+        
+        // Use relative URL from public root
+        const publicUrl = `/uploads/${fileName}`;
+
+        if (table === "cms_technical_documents" && key === "file_url") {
+          payload[key] = publicUrl;
+          payload["file_size"] = normalized.size;
+          payload["mime_type"] = normalized.type;
+        } else {
+          // Store the path to the file rather than base64
+          payload[key] = publicUrl;
+        }
+      }
+    } else if (normalized !== undefined) {
+      if (key === "file_url" && typeof normalized === "string" && normalized.startsWith("http")) {
+        // If a file URL was manually typed in instead of a file upload, use that
+        payload[key] = normalized;
+      } else {
+        payload[key] = normalized as string | boolean | number | null;
+      }
     }
   }
 
@@ -155,6 +242,11 @@ export async function updateCmsRecord(table: string, id: string | number, formDa
       payload.level = 0;
       payload.parent_id = null; // Ensure parent_id is strictly null if empty
     }
+  }
+
+  // Auto-generate document_code if missing on technical documents to prevent unique constraint errors
+  if (table === "cms_technical_documents" && !payload.document_code && typeof payload.title === "string") {
+    payload.document_code = `DOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }
 
   // Luôn luôn đặt trạng thái là published

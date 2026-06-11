@@ -3,8 +3,8 @@ import Header from "@/components/Header";
 import HeroBanner from "@/components/HeroBanner";
 import SafetyBanner from "@/components/SafetyBanner";
 import SectionTitle from "@/components/SectionTitle";
+import HomeNewsClient from "@/components/HomeNewsClient";
 import { getHomepageContent } from "@/lib/homepage-content";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
  * Component placeholder hình ảnh.
@@ -137,62 +137,7 @@ export default async function Home() {
       <SafetyBanner slides={content.safety_slides} />
 
       {/* News section: tin tức với tab lọc, điều hướng và danh sách bài viết. */}
-      <section className="w-fullbg-white py-24">
-        <div className="container mx-auto w-full">
-          <SectionTitle>{content.news_title}</SectionTitle>
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-5">
-            <div className="flex gap-4">
-              {/* Tabs phân loại tin tức, tab đầu tiên đang active. */}
-              {content.news_tabs.map((tab, index) => (
-                <button
-                  key={tab}
-                  className={`h-12 min-w-[128px] border px-8 ${
-                    index === 0
-                      ? "border-[#00aeef] bg-[#00aeef] text-white"
-                      : "border-[#3d3d3d] bg-white"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-4">
-              {/* Nút điều hướng carousel/list tin tức. */}
-              <button className="grid size-12 place-items-center rounded-full bg-[#ededed] text-white">
-                <ChevronLeft className="size-5" aria-hidden="true" />
-              </button>
-              <button className="grid size-12 place-items-center rounded-full bg-[#00aeef] text-white">
-                <ChevronRight className="size-5" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          {/* Danh sách bài viết, mỗi card gồm ảnh, ngày tháng, tiêu đề và mô tả. */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {content.posts.map((post) => (
-              <article key={post.title} className="border border-[#e5e5e5]">
-                <GrayImage className="h-[250px]" />
-                <div className="p-4">
-                  <div className="mb-5 flex items-start justify-between border-b border-[#3d3d3d] pb-4">
-                    <span className="text-3xl font-medium">{post.day}</span>
-                    <span className="text-right text-sm">
-                      {post.month}
-                      <br />
-                      {post.year}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold leading-tight">
-                    {post.title}
-                  </h3>
-                  <p className="mt-3 line-clamp-3 text-base leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeNewsClient newsTitle={content.news_title} />
 
       {/* Contact section: form liên hệ để khách hàng gửi thông tin. */}
       <section className="w-fullbg-white pb-28">

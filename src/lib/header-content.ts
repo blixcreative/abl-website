@@ -35,7 +35,7 @@ export const defaultHeaderContent: HeaderContent = {
     },
     {
       title: "Tài Liệu Kỹ Thuật",
-      url: "#",
+      url: "/technical-docs",
     },
     {
       title: "Giải Pháp & Ứng Dụng",
@@ -47,7 +47,7 @@ export const defaultHeaderContent: HeaderContent = {
     },
     {
       title: "Liên hệ",
-      url: "#",
+      url: "/contact-us",
     },
   ],
 };
@@ -68,10 +68,14 @@ function withDefaultNavigation(
 
       const record = item as Record<string, unknown>;
       const title = String(record.title ?? "").trim();
-      const url = String(record.url ?? "").trim();
+      let url = String(record.url ?? "").trim();
 
       if (!title) {
         return null;
+      }
+
+      if (url && url !== "#" && !url.startsWith("/") && !url.startsWith("http")) {
+        url = "/" + url;
       }
 
       return {
@@ -110,5 +114,43 @@ export async function getHeaderContent() {
     .eq("id", "header")
     .maybeSingle();
 
-  return mergeHeaderContent(data as Partial<HeaderContent> | null);
+  const finalData = mergeHeaderContent(data as Partial<HeaderContent> | null);
+
+  // Fetch Site Information
+  const { data: siteInfo } = await supabase
+    .from("cms_site_information")
+    .select("*")
+    .limit(1)
+    .maybeSingle();
+
+  if (siteInfo) {
+    if (siteInfo.phone) {
+      finalData.phone = siteInfo.phone;
+    }
+    if (siteInfo.site_name) {
+      finalData.title = siteInfo.site_name;
+    }
+  }
+
+  // Fetch Menu Items (Header)
+  const { data: menuItems } = await supabase
+    .from("cms_menu_items")
+    .select("*")
+    .eq("menu_location", "header")
+    .order("sort_order", { ascending: true, nullsFirst: false });
+
+  if (menuItems && menuItems.length > 0) {
+    finalData.navigation = menuItems.map(item => {
+      let url = item.url || "#";
+      if (url && url !== "#" && !url.startsWith("/") && !url.startsWith("http")) {
+        url = "/" + url;
+      }
+      return {
+        title: item.label,
+        url: url,
+      };
+    });
+  }
+
+  return finalData;
 }

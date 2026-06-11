@@ -55,7 +55,7 @@ export default function HeroBanner({ slides }: HeroBannerProps) {
 
       <div className="container relative mx-auto flex min-h-[750px] w-full flex-col items-start justify-center gap-10 px-4 py-24">
         <div className="max-w-5xl">
-          <h1 className="font-alumni text-[64px] font-bold uppercase leading-[0.95] tracking-tight md:text-[104px] font-alu">
+          <h1 className="font-alumni text-[64px] font-bold leading-[0.95] tracking-tight md:text-[104px] font-alu">
             {activeSlide.title.split("\n").map((line, index) => (
               <span key={`${line}-${index}`}>
                 {index > 0 ? <br /> : null}

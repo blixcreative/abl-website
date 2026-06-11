@@ -14,7 +14,10 @@ export type AdminSectionKey =
   | "technicalDocuments"
   | "siteInfo"
   | "menus"
-  | "about";
+  | "about"
+  | "about_mini_slides"
+  | "about_partners"
+  | "about_awards";
 
 export type AdminFieldType =
   | "text"
@@ -255,8 +258,7 @@ export const adminModules: AdminModule[] = [
       { name: "related_product_id", label: "ID sản phẩm liên quan", type: "text" },
       { name: "version", label: "Phiên bản", type: "text" },
       { name: "language", label: "Ngôn ngữ", type: "text", placeholder: "vi / en" },
-      { name: "file", label: "Upload file", type: "file", fullWidth: true, help: "Khi kết nối Supabase Storage, file được đưa vào bucket cms-technical-documents." },
-      { name: "file_url", label: "File URL", type: "url", fullWidth: true },
+      { name: "file_url", label: "Upload file / File URL", type: "file", fullWidth: true, help: "Khi kết nối Supabase Storage, file được đưa vào bucket cms-technical-documents." },
       { name: "file_size", label: "Dung lượng byte", type: "number" },
       { name: "mime_type", label: "MIME type", type: "text" },
     ],

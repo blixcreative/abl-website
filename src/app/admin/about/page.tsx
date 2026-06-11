@@ -3,15 +3,51 @@ import {
   updateAboutBanner,
   updateAboutDirector,
   updateAboutVisionMission,
-  upsertAboutMiniSlide,
-  deleteAboutMiniSlide,
-  upsertAboutPartner,
-  deleteAboutPartner,
-  upsertAboutAward,
-  deleteAboutAward,
 } from "./actions";
 import { SubmitButton } from "./submit-button";
 import Link from "next/link";
+import CmsTable, { SafeAdminModule } from "../components/cms-table";
+
+const miniSlideModule: SafeAdminModule = {
+  key: "about_mini_slides",
+  title: "4. Năng lực / Thống kê (Mini Slides)",
+  subtitle: "Quản lý các slide năng lực, thống kê hiển thị trên trang Giới thiệu.",
+  badge: "Năng lực",
+  description: "",
+  table: "cms_about_mini_slide",
+  fields: [
+    { name: "title", label: "Tiêu đề", type: "text", required: true },
+    { name: "image_url", label: "Hình ảnh", type: "file", required: true },
+    { name: "description", label: "Mô tả", type: "textarea", required: true, fullWidth: true },
+  ],
+};
+
+const partnerModule: SafeAdminModule = {
+  key: "about_partners",
+  title: "5. Đối tác / Khách hàng",
+  subtitle: "Quản lý danh sách logo đối tác và khách hàng.",
+  badge: "Đối tác",
+  description: "",
+  table: "cms_about_partner",
+  fields: [
+    { name: "name", label: "Tên đối tác", type: "text", required: true },
+    { name: "image_file", label: "Logo đối tác", type: "file", required: true },
+  ],
+};
+
+const awardModule: SafeAdminModule = {
+  key: "about_awards",
+  title: "6. Giải thưởng / Chứng nhận",
+  subtitle: "Quản lý danh sách giải thưởng, chứng nhận của công ty.",
+  badge: "Giải thưởng",
+  description: "",
+  table: "cms_about_award",
+  fields: [
+    { name: "title", label: "Tiêu đề giải thưởng", type: "text", required: true },
+    { name: "image_url", label: "Hình ảnh / Chứng nhận", type: "file", required: true },
+    { name: "description", label: "Mô tả", type: "textarea", required: true, fullWidth: true },
+  ],
+};
 
 export default async function AboutAdminPage() {
   const supabase = await createSupabaseServerClient();
@@ -146,195 +182,11 @@ export default async function AboutAdminPage() {
           </form>
         </section>
 
-        {/* Mini Slides (Thống kê / Năng lực) Section */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-bold mb-4 text-[#1a73e8]">4. Năng lực / Thống kê (Mini Slides)</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {slides?.map((item) => (
-              <div key={item.id} className="border rounded-md p-4 relative bg-slate-50">
-                <form action={deleteAboutMiniSlide} className="absolute top-2 right-2 z-10">
-                  <input type="hidden" name="id" value={item.id} />
-                  <SubmitButton variant="danger" className="!px-2 !py-1 text-xs">Xóa</SubmitButton>
-                </form>
-                <form action={upsertAboutMiniSlide} className="space-y-3 mt-2">
-                  <input type="hidden" name="id" value={item.id} />
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Tiêu đề</label>
-                    <input type="text" name="title" defaultValue={item.title} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Mô tả</label>
-                    <textarea name="description" defaultValue={item.description} className="w-full border rounded px-2 py-1 text-sm min-h-[60px]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                    <input type="number" name="sort_order" defaultValue={item.sort_order} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Đổi ảnh</label>
-                    <div className="flex flex-col gap-2">
-                      {item.image_url && <img src={item.image_url} alt="" className="h-12 w-12 object-contain bg-white border" />}
-                      <input type="file" name="image_url" accept="image/*" className="w-full border rounded px-2 py-1 text-xs" />
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <SubmitButton className="w-full">Cập nhật</SubmitButton>
-                  </div>
-                </form>
-              </div>
-            ))}
-            
-            {/* Form thêm mới */}
-            <div className="border border-dashed border-blue-300 rounded-md p-4 bg-blue-50/30">
-              <h3 className="font-semibold text-sm mb-3 text-blue-700">Thêm mục mới</h3>
-              <form action={upsertAboutMiniSlide} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Tiêu đề</label>
-                  <input type="text" name="title" required className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Mô tả</label>
-                  <textarea name="description" required className="w-full border rounded px-2 py-1 text-sm min-h-[60px]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                  <input type="number" name="sort_order" defaultValue={0} className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Hình ảnh</label>
-                  <input type="file" name="image_url" required accept="image/*" className="w-full border rounded px-2 py-1 text-xs bg-white" />
-                </div>
-                <div className="pt-2">
-                  <SubmitButton className="w-full">Thêm mới</SubmitButton>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
-        {/* Đối tác Section */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-bold mb-4 text-[#1a73e8]">5. Đối tác / Khách hàng</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {partners?.map((item) => (
-              <div key={item.id} className="border rounded-md p-4 relative bg-slate-50 flex flex-col justify-between">
-                <form action={deleteAboutPartner} className="absolute top-2 right-2 z-10">
-                  <input type="hidden" name="id" value={item.id} />
-                  <SubmitButton variant="danger" className="!px-2 !py-1 text-xs">Xóa</SubmitButton>
-                </form>
-                <form action={upsertAboutPartner} className="space-y-3 mt-2">
-                  <input type="hidden" name="id" value={item.id} />
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Tên đối tác</label>
-                    <input type="text" name="name" defaultValue={item.name} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                    <input type="number" name="sort_order" defaultValue={item.sort_order} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Đổi logo</label>
-                    <div className="flex flex-col gap-2">
-                      {item.image_file && <img src={item.image_file} alt="" className="h-10 w-full object-contain bg-white border p-1" />}
-                      <input type="file" name="image_file" accept="image/*" className="w-full border rounded px-2 py-1 text-xs" />
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <SubmitButton className="w-full">Cập nhật</SubmitButton>
-                  </div>
-                </form>
-              </div>
-            ))}
-            
-            {/* Form thêm mới */}
-            <div className="border border-dashed border-blue-300 rounded-md p-4 bg-blue-50/30">
-              <h3 className="font-semibold text-sm mb-3 text-blue-700">Thêm đối tác mới</h3>
-              <form action={upsertAboutPartner} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Tên đối tác</label>
-                  <input type="text" name="name" required className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                  <input type="number" name="sort_order" defaultValue={0} className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Logo</label>
-                  <input type="file" name="image_file" required accept="image/*" className="w-full border rounded px-2 py-1 text-xs bg-white" />
-                </div>
-                <div className="pt-2 mt-auto">
-                  <SubmitButton className="w-full">Thêm mới</SubmitButton>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
-        {/* Giải thưởng Section */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-xl font-bold mb-4 text-[#1a73e8]">6. Giải thưởng / Chứng nhận</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {awards?.map((item) => (
-              <div key={item.id} className="border rounded-md p-4 relative bg-slate-50">
-                <form action={deleteAboutAward} className="absolute top-2 right-2 z-10">
-                  <input type="hidden" name="id" value={item.id} />
-                  <SubmitButton variant="danger" className="!px-2 !py-1 text-xs">Xóa</SubmitButton>
-                </form>
-                <form action={upsertAboutAward} className="space-y-3 mt-2">
-                  <input type="hidden" name="id" value={item.id} />
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Tiêu đề</label>
-                    <input type="text" name="title" defaultValue={item.title} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Mô tả</label>
-                    <textarea name="description" defaultValue={item.description} className="w-full border rounded px-2 py-1 text-sm min-h-[60px]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                    <input type="number" name="sort_order" defaultValue={item.sort_order} className="w-full border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Đổi ảnh</label>
-                    <div className="flex flex-col gap-2">
-                      {item.image_url && <img src={item.image_url} alt="" className="h-16 w-full object-contain bg-white border" />}
-                      <input type="file" name="image_url" accept="image/*" className="w-full border rounded px-2 py-1 text-xs" />
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <SubmitButton className="w-full">Cập nhật</SubmitButton>
-                  </div>
-                </form>
-              </div>
-            ))}
-            
-            {/* Form thêm mới */}
-            <div className="border border-dashed border-blue-300 rounded-md p-4 bg-blue-50/30">
-              <h3 className="font-semibold text-sm mb-3 text-blue-700">Thêm giải thưởng mới</h3>
-              <form action={upsertAboutAward} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Tiêu đề</label>
-                  <input type="text" name="title" required className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Mô tả</label>
-                  <textarea name="description" required className="w-full border rounded px-2 py-1 text-sm min-h-[60px]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Thứ tự</label>
-                  <input type="number" name="sort_order" defaultValue={0} className="w-full border rounded px-2 py-1 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Hình ảnh</label>
-                  <input type="file" name="image_url" required accept="image/*" className="w-full border rounded px-2 py-1 text-xs bg-white" />
-                </div>
-                <div className="pt-2">
-                  <SubmitButton className="w-full">Thêm mới</SubmitButton>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
+        <CmsTable module={miniSlideModule} data={slides || []} />
+        
+        <CmsTable module={partnerModule} data={partners || []} />
+        
+        <CmsTable module={awardModule} data={awards || []} />
 
       </div>
     </main>

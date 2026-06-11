@@ -36,6 +36,28 @@ export default function CmsFormModal({
     setIsPending(true);
 
     try {
+      // Handle the split file_url inputs before sending to server action
+      module.fields.forEach(field => {
+        if (field.type === "file") {
+          const fileInput = formData.get(`${field.name}_upload`) as File;
+          const urlInput = formData.get(`${field.name}_url`) as string;
+          
+          if (fileInput && fileInput.size > 0) {
+            // Keep the file
+            formData.set(field.name, fileInput);
+          } else if (urlInput && urlInput.trim() !== "") {
+            // Use the URL
+            formData.set(field.name, urlInput);
+          } else if (field.required && !initialData?.[field.name]) {
+             throw new Error(`Vui lòng chọn file hoặc nhập URL cho ${field.label}`);
+          }
+          
+          // Remove the temporary fields
+          formData.delete(`${field.name}_upload`);
+          formData.delete(`${field.name}_url`);
+        }
+      });
+
       if (initialData && initialData.id) {
         await updateCmsRecord(module.table, initialData.id, formData);
       } else {
@@ -125,24 +147,43 @@ export default function CmsFormModal({
                       ))}
                     </select>
                   ) : field.type === "file" ? (
-                    <div>
-                      {defaultValue && (defaultValue.startsWith("data:") || defaultValue.startsWith("http")) ? (
-                        <div className="mb-2 w-[100px] h-[100px] border border-gray-200 rounded-md overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <div className="space-y-2">
+                      {defaultValue && (defaultValue.startsWith("data:") || defaultValue.startsWith("http") || defaultValue.startsWith("/")) ? (
+                        <div className="w-[100px] h-[100px] border border-gray-200 rounded-md overflow-hidden bg-gray-50 flex items-center justify-center">
                           {defaultValue.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || defaultValue.startsWith("data:image/") ? (
                             <img src={defaultValue} alt="Preview" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-xs text-gray-500">Có file đính kèm</span>
+                            <a href={defaultValue} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">Xem file đính kèm</a>
                           )}
                         </div>
                       ) : null}
-                      <input
-                        type="file"
-                        id={field.name}
-                        name={field.name}
-                        required={field.required && !defaultValue} // Không bắt buộc nếu đã có data
-                        accept={field.name.includes("image") ? "image/*" : undefined}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-500 mb-1">Hoặc upload file mới:</p>
+                          <input
+                            type="file"
+                            id={`${field.name}_upload`}
+                            name={`${field.name}_upload`}
+                            // Only require one of the fields if field is required
+                            accept={field.name.includes("image") ? "image/*" : undefined}
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 items-center mt-2">
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-500 mb-1">Hoặc nhập URL:</p>
+                          <input
+                            type="text"
+                            id={`${field.name}_url`}
+                            name={`${field.name}_url`}
+                            placeholder="https://... hoặc /uploads/..."
+                            defaultValue={defaultValue && (defaultValue.startsWith("http") || defaultValue.startsWith("/")) ? defaultValue : ""}
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <input
