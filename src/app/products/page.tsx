@@ -156,12 +156,12 @@ export default async function ProductsPage({
       <section className="w-full bg-[#075f74] py-14 text-white md:py-20">
         <div className="container mx-auto w-full px-4">
           <SectionTitle light>Phân Loại Sản Phẩm</SectionTitle>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:gap-6 snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {level0Categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/products/category-list/${category.id}`}
-                className="relative flex h-[320px] items-end overflow-hidden bg-slate-700 p-8 md:h-[400px] group block"
+                className="relative flex h-[320px] w-[280px] md:w-auto flex-shrink-0 items-end overflow-hidden bg-slate-700 p-8 md:h-[400px] group block snap-start"
               >
                 {category.image_file ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -193,7 +193,7 @@ export default async function ProductsPage({
           </div>
 
           <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-            <aside className="space-y-4 pt-1 text-[#00aeef]">
+            <aside className="flex gap-4 overflow-x-auto pb-4 lg:flex-col lg:space-y-4 lg:pb-0 lg:pt-1 text-[#00aeef] whitespace-nowrap hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               <Link
                 href="/products#products"
                 className={`flex items-center gap-2 font-bold transition-colors ${

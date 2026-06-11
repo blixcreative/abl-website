@@ -10,7 +10,11 @@ type SearchResult = {
   name: string;
 };
 
-export default function HeaderSearch() {
+type HeaderSearchProps = {
+  mobile?: boolean;
+};
+
+export default function HeaderSearch({ mobile = false }: HeaderSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -47,8 +51,8 @@ export default function HeaderSearch() {
   }, [searchTerm]);
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <div className="flex h-10 w-[400px] items-center justify-between border border-white/90 px-4 text-sm bg-transparent">
+    <div className={`relative ${mobile ? 'w-full' : ''}`} ref={dropdownRef}>
+      <div className={`flex h-10 ${mobile ? 'w-full' : 'w-[400px] hidden lg:flex'} items-center justify-between border border-white/90 px-4 text-sm bg-transparent`}>
         <input
           type="text"
           placeholder="Tìm kiếm sản phẩm..."

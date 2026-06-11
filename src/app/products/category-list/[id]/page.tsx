@@ -194,7 +194,7 @@ export default async function CategoryListPage({
           </div>
 
           <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-            <aside className="space-y-4 pt-1 text-[#00aeef]">
+            <aside className="flex gap-4 overflow-x-auto pb-4 lg:flex-col lg:space-y-4 lg:pb-0 lg:pt-1 text-[#00aeef] whitespace-nowrap hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               <Link
                 href={`/products/category-list/${parentId}#products`}
                 className={`flex items-center gap-2 font-bold transition-colors ${

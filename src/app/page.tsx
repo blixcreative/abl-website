@@ -33,12 +33,12 @@ export default async function Home() {
       <section className="w-full flex items-center justify-center bg-[#075f74] text-white">
         <div className="container mx-auto w-full py-20">
           <SectionTitle light>{content.partners_title}</SectionTitle>
-          <div className="grid grid-cols-2 items-center gap-10 text-center md:grid-cols-5">
+          <div className="flex gap-10 items-center overflow-x-auto pb-4 px-4 md:px-0 md:grid md:grid-cols-5 md:gap-10 text-center snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {/* Render logo đối tác từ base64 đã cấu hình trong admin. */}
             {content.partners.map((partner, index) => (
               <div
                 key={`${partner.name}-${index}`}
-                className="flex min-h-24 items-center justify-center"
+                className="flex min-h-24 w-[160px] md:w-auto flex-shrink-0 items-center justify-center snap-start"
               >
                 {partner.logo_base64 ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -60,14 +60,14 @@ export default async function Home() {
 
       {/* Applications section: các lĩnh vực ứng dụng của sản phẩm/dịch vụ. */}
       <section className="w-full flex items-center justify-center overflow-hidden bg-[#075f74] text-white">
-        <div className="container mx-auto w-full pt-10 pb-20">
+        <div className="container mx-auto w-full pt-10 pb-20 px-4">
           <SectionTitle light>{content.applications_title}</SectionTitle>
-          <div className="flex gap-6 overflow-hidden">
+          <div className="flex overflow-x-auto gap-6 pb-4 md:flex-row snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {/* Render từng card ứng dụng theo dữ liệu applications. */}
             {content.applications.map((item, index) => (
               <article
                 key={`${item.title}-${index}`}
-                className="relative flex w-auto flex-1 items-end justify-start overflow-hidden bg-slate-700 bg-cover bg-center p-4 text-left h-[400px]"
+                className="relative flex w-[280px] md:w-auto flex-shrink-0 md:flex-1 items-end justify-start overflow-hidden bg-slate-700 bg-cover bg-center p-4 text-left h-[400px] snap-start"
                 style={
                   item.image_base64
                     ? {
@@ -94,10 +94,10 @@ export default async function Home() {
 
           <SectionTitle>{content.products_title}</SectionTitle>
 
-          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-10 snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {/* Render card sản phẩm gồm ảnh, tên và mô tả. */}
             {content.products.map((product) => (
-              <article key={product.name} className="pt-8">
+              <article key={product.name} className="pt-8 w-[280px] md:w-auto flex-shrink-0 snap-start">
                 {product.image_base64 ? (
                   <div className="relative z-10 mx-auto flex h-[240px] w-[240px] items-center justify-center overflow-hidden p-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -140,8 +140,8 @@ export default async function Home() {
       <HomeNewsClient newsTitle={content.news_title} />
 
       {/* Contact section: form liên hệ để khách hàng gửi thông tin. */}
-      <section className="w-fullbg-white pb-28">
-        <div className="container mx-auto w-full">
+      <section className="w-full bg-white pb-14 md:pb-28">
+        <div className="container mx-auto w-full px-4">
           <SectionTitle>{content.contact_title}</SectionTitle>
           <form className="space-y-5">
             {/* Render các input liên hệ từ cấu hình contact_fields. */}

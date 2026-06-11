@@ -130,7 +130,7 @@ export default async function AboutUsPage() {
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 drop-shadow-md">
-          <h1 className="text-8xl font-alu font-bold text-white uppercase whitespace-pre-line">
+          <h1 className="text-5xl md:text-8xl font-alu font-bold text-white uppercase whitespace-pre-line">
             {banner?.title || content.banner_title}
           </h1>
           <p className="mt-4 max-w-[760px] text-lg text-white/95 md:text-xl whitespace-pre-line">
@@ -157,9 +157,9 @@ export default async function AboutUsPage() {
       <section className="w-full bg-[#00495a] py-20 text-white md:py-28">
         <div className="container mx-auto w-full px-4">
           <SectionTitle light>Đối Tác & Khách Hàng</SectionTitle>
-          <div className="grid grid-cols-2 items-center gap-x-10 gap-y-16 py-6 text-center md:grid-cols-5">
+          <div className="flex gap-10 items-center overflow-x-auto py-6 text-center md:grid md:grid-cols-5 md:gap-x-10 md:gap-y-16 snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {(partnersData.length > 0 ? partnersData : homepage.partners).map((partner: any, index: number) => (
-              <div key={`${partner.name}-${index}`} className="flex min-h-20 items-center justify-center">
+              <div key={`${partner.name}-${index}`} className="flex min-h-20 w-[140px] md:w-auto flex-shrink-0 items-center justify-center snap-start">
                 {(partner.image_file || partner.logo_base64) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -183,11 +183,11 @@ export default async function AboutUsPage() {
         <div className="container mx-auto grid w-full items-center md:grid-cols-[0.85fr_1.15fr]">
           <ContentImage
             src={director?.image_url || content.director_image_base64}
-            className="min-h-[520px] w-full md:min-h-[660px]"
+            className="min-h-[350px] w-full md:min-h-[660px]"
           />
           <div className="px-4 py-16 md:px-24">
             <p className="text-2xl font-bold">Giám Đốc</p>
-            <h2 className="font-alu mt-2 text-[58px] font-bold uppercase leading-none md:text-[72px]">
+            <h2 className="font-alu mt-2 text-[44px] font-bold uppercase leading-none md:text-[72px]">
               {director?.name || content.director_name}
             </h2>
             <div className="my-8 h-px w-full bg-white/55" />
@@ -234,7 +234,7 @@ export default async function AboutUsPage() {
         <div className="container mx-auto grid w-full items-center gap-12 px-4 md:grid-cols-[0.85fr_1fr]">
           <div>
             <SectionTitle light>Giải Thưởng / Chứng Nhận</SectionTitle>
-            <h2 className="font-alu text-[64px] font-bold leading-none md:text-[82px] whitespace-pre-line">
+            <h2 className="font-alu text-[44px] font-bold leading-none md:text-[82px] whitespace-pre-line">
               {firstAward?.title || content.award_cert_title}
             </h2>
             <div className="mt-10 max-w-[560px] space-y-8 text-lg font-bold leading-relaxed whitespace-pre-line">
@@ -243,7 +243,7 @@ export default async function AboutUsPage() {
           </div>
           <ContentImage
             src={firstAward?.image_url || content.award_image_base64}
-            className="min-h-[520px] w-full bg-slate-100"
+            className="min-h-[320px] w-full bg-slate-100"
           />
         </div>
       </section>

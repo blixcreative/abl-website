@@ -3,6 +3,7 @@ import { getHeaderContent } from "@/lib/header-content";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HeaderSearch from "./HeaderSearch";
+import MobileMenu from "./MobileMenu";
 
 type ProductCategory = {
   id: string;
@@ -32,8 +33,10 @@ export default async function Header() {
 
   return (
     <header className="w-full flex flex-col items-center gap-2 justify-center bg-[#002330] text-white backdrop-blur-sm sticky top-0 z-50">
-      <div className="w-full container mx-auto flex items-center justify-between gap-8 px-4 py-7">
-        <div className="flex items-center gap-5">
+      <div className="w-full container mx-auto flex items-center justify-between gap-4 lg:gap-8 px-4 py-4 lg:py-7">
+        <MobileMenu navigation={content.navigation} categories={categories} />
+        
+        <div className="flex items-center gap-5 flex-1 lg:flex-none justify-center lg:justify-start">
           <div className="leading-none flex gap-4 items-center">
             {content.logo_1_base64 ? (
               
@@ -87,7 +90,7 @@ export default async function Header() {
         </div>
       </div>
 
-      <nav className="flex gap-4 justify-between w-full container mx-auto px-4 pb-5 text-md font-bold uppercase relative">
+      <nav className="hidden lg:flex gap-4 justify-between w-full container mx-auto px-4 pb-5 text-md font-bold uppercase relative">
         {content.navigation.map((item) => {
           const isProduct = item.url === "/products" || item.title.toLowerCase() === "sản phẩm" || item.title.toLowerCase() === "products";
 

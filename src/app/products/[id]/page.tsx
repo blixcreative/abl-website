@@ -154,7 +154,7 @@ export default async function ProductDetailPage({
         </h1>
         {/* {product.sku && <p className="mb-8 text-xl text-gray-500">Mã: {product.sku}</p>} */}
 
-        <div className="mb-8 flex flex-wrap bg-[#153d4b] text-white">
+        <div className="mb-8 flex overflow-x-auto bg-[#153d4b] text-white whitespace-nowrap hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {[
             ["Chi Tiết Sản Phẩm", "#chi-tiet-san-pham"],
             ["Tài Liệu & Bài Viết", "#tai-lieu-bai-viet"],
@@ -164,7 +164,7 @@ export default async function ProductDetailPage({
             <a
               key={label}
               href={href}
-              className="px-6 py-5 text-lg transition-colors hover:bg-[#00aeef] md:px-8 md:text-xl"
+              className="px-6 py-5 text-lg transition-colors hover:bg-[#00aeef] md:px-8 md:text-xl flex-shrink-0"
             >
               {label}
             </a>
@@ -270,12 +270,12 @@ export default async function ProductDetailPage({
           <SectionHeading id="lien-he">Liên Hệ Tư Vấn & Báo Giá</SectionHeading>
 
           <form className="mt-10 border border-[#e5e5e5] px-6 py-8 md:px-8">
-            <div className="mb-10 flex gap-10">
-              <div>
-                <GrayImage className="h-[320px] w-[320px]" src={mainImage} />
+            <div className="mb-10 flex flex-col md:flex-row gap-10">
+              <div className="flex justify-center md:justify-start">
+                <GrayImage className="h-[280px] w-[280px] md:h-[320px] md:w-[320px]" src={mainImage} />
               </div>
 
-              <div className="flex flex-col gap-5 text-lg leading-relaxed text-[#4a4a4a]">
+              <div className="flex flex-col gap-5 text-lg leading-relaxed text-[#4a4a4a] text-center md:text-left">
                 {[
                   ["Tên sản phẩm", product.name || product.name],
                   ["Mã sản phẩm", product.sku || product.name],
@@ -328,7 +328,7 @@ export default async function ProductDetailPage({
             Sản Phẩm Tương Tự
           </SectionHeading>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 xl:grid-cols-4 md:gap-6 snap-x snap-mandatory hide-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {relatedProductsData && relatedProductsData.length > 0 ? (
               relatedProductsData.map((related: any) => {
                 let relatedImage = fallbackImage;
@@ -336,15 +336,15 @@ export default async function ProductDetailPage({
                   relatedImage = related.main_image_url || related.image_base64;
                 } else if (related.images) {
                   try {
-                    const p = typeof related.images === "string" ? JSON.parse(related.images) : related.images;
-                    if (Array.isArray(p) && p.length > 0) relatedImage = p[0];
+                     const p = typeof related.images === "string" ? JSON.parse(related.images) : related.images;
+                     if (Array.isArray(p) && p.length > 0) relatedImage = p[0];
                   } catch (e) {}
                 }
 
                 return (
                   <article
                     key={related.id}
-                    className="flex min-h-[420px] flex-col border border-[#e5e5e5] bg-white px-6 pb-7 pt-7 hover:shadow-md transition-shadow"
+                    className="flex min-h-[420px] w-[280px] md:w-auto flex-shrink-0 flex-col border border-[#e5e5e5] bg-white px-6 pb-7 pt-7 hover:shadow-md transition-shadow snap-start"
                   >
                     <Link href={`/products/${related.id}`} className="mb-auto h-[220px] w-full flex justify-center items-center">
                       <img src={relatedImage} alt={related.name} className="max-w-full max-h-full object-contain" />
